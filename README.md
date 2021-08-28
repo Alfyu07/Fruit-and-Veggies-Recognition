@@ -1,4 +1,4 @@
-# fruit_and_veggies_recognition
+# Fruit_and_Veggies_recognition
 
 Basic Flutter apps, implementing tensorflow lite and machine learning model to recognize 36 types of fruits and veggies from "Fruit and Vegetable Image Recognition Dataset" (https://www.kaggle.com/kritikseth/fruit-and-vegetable-image-recognition).
 
