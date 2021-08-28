@@ -1,11 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:fruit_and_veggies_recognition/models/provider.dart';
 import 'package:fruit_and_veggies_recognition/models/result.dart';
 import 'package:fruit_and_veggies_recognition/models/tflite.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:tflite/tflite.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,6 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<Result> results = [];
+  bool _isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -39,8 +39,6 @@ class _HomePageState extends State<HomePage> {
       return File(image.path);
     }
 
-    final provider = Provider.of<MyProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Fruit and Veggies Recognition'),
@@ -49,14 +47,14 @@ class _HomePageState extends State<HomePage> {
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: provider.results.length != 0
+          child: results.length != 0
               ? GridView.builder(
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 200,
                       childAspectRatio: 1,
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 20),
-                  itemCount: provider.results.length,
+                  itemCount: results.length,
                   itemBuilder: (context, index) => Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -71,23 +69,29 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: Column(
                       children: [
-                        Image.file(
-                          provider.results[index].image!,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            results[index].image!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'The object is ${provider.results[index].result}',
+                          'The object is ${results[index].result}',
                           style: TextStyle(
                               fontWeight: FontWeight.w500, fontSize: 12),
-                        )
+                        ),
                       ],
                     ),
                   ),
                 )
-              : Container(),
+              : _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : Container(),
         ),
       ),
       floatingActionButton: Padding(
@@ -100,26 +104,34 @@ class _HomePageState extends State<HomePage> {
                 final File? image = await pickImage(ImageSource.gallery);
                 if (image == null) return;
                 // print(image.path);
+                setState(() {
+                  _isLoading = true;
+                });
                 List output = await TensorFlowLite.classifyImage(image);
-                print(output);
 
                 final Result result = Result(image, output[0]['label']);
-                provider.results.add(result);
-                setState(() {});
+                setState(() {
+                  results.add(result);
+                  _isLoading = false;
+                });
               },
-              child: Icon(Icons.photo_album),
+              child: Icon(Icons.photo),
             ),
             SizedBox(height: 24),
             FloatingActionButton(
               onPressed: () async {
                 final File? image = await pickImage(ImageSource.camera);
                 if (image == null) return;
-                print(image.path);
+                setState(() {
+                  _isLoading = true;
+                });
                 List output = await TensorFlowLite.classifyImage(image);
-                print(output);
                 final Result result = Result(image, output[0]['label']);
-                provider.results.add(result);
-                setState(() {});
+                results.add(result);
+                setState(() {
+                  results.add(result);
+                  _isLoading = false;
+                });
               },
               child: Icon(Icons.camera),
             ),
